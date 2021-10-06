@@ -39,7 +39,7 @@ class Consumer:
             # if self.__data_provider_ack_file.ta1_data_provider.get_ta104() == 'R':
             #     self.__write_to_final_report_ta1_error()
             #     return
-            self.__write_header_section()
+            # self.__write_header_section()
 
             while self.__loop_count > 0:
                 for self.__ack_segment in self.__edi_file:

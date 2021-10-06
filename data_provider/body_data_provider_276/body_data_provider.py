@@ -1,13 +1,3 @@
-# import loop2000A
-# import loop2100A
-# import loop2000B
-# import loop2100B
-# import loop2000C
-# import loop2100C
-# import loop2000D
-# import loop2100D
-# import loop2200D
-import json
 
 from data_provider.body_data_provider_276 import loop2000A
 from data_provider.body_data_provider_276 import loop2100A
@@ -23,27 +13,18 @@ from data_provider.body_data_provider_276 import loop2200D
 class BodyDataProvider:
     def __init__(self, ack_dict):
         self.ack_dict = ack_dict
-
         self.__loop2000a_hl = loop2000A.get_hl(self.ack_dict.get('2000A'))
-
-        # #### your mistake
-        # self.__loop2100a_nm1 = loop2100A.get_loop2100a_nm1(self.ack_dict.get('2100A'))
-
         self.__loop2100a_nm1 = loop2100A.get_loop2100a_nm1(self.ack_dict.get('2000A'))
-        #
-        # self.__loop2000b_hl = loop2000B.get_hl(self.ack_dict.get('2000B'))
-        # self.__loop2100b_nm1 = loop2100B.get_loop2100b_nm1(self.ack_dict.get('2000B'))
-        #
-        # self.__loop2000c_hl = loop2000C.get_hl(self.ack_dict.get('2000C'))
-        # self.__loop2100c_nm1 = loop2100C.get_loop2100c_nm1(self.ack_dict.get('2000C'))
-        # #
-        # self.__loop2000d_hl = loop2000D.get_loop2000d_hl(self.ack_dict.get('2000D'))
-        # self.__loop2000d_dmg = loop2000D.get_loop2000d_dmg(self.ack_dict.get('2000D'))
-        # self.__loop2100d_nm1 = loop2100D.get_loop2100d_nm1(self.ack_dict.get('2000D'))
-        # self.__loop2200d_trn = loop2200D.get_loop2200d_trn(self.ack_dict.get('2000D'))
-        # self.__loop2200d_ref = loop2200D.get_loop2200d_ref(self.ack_dict.get('2000D'))
-        # self.__loop2200d_amt = loop2200D.get_loop2200d_amt(self.ack_dict.get('2000D'))
-
+        self.__loop2000b_hl = loop2000B.get_hl(self.ack_dict.get('2000B'))
+        self.__loop2100b_nm1 = loop2100B.get_loop2100b_nm1(self.ack_dict.get('2000B'))
+        self.__loop2000c_hl = loop2000C.get_hl(self.ack_dict.get('2000C'))
+        self.__loop2100c_nm1 = loop2100C.get_loop2100c_nm1(self.ack_dict.get('2000C'))
+        self.__loop2000d_hl = loop2000D.get_loop2000d_hl(self.ack_dict.get('2000D'))
+        self.__loop2000d_dmg = loop2000D.get_loop2000d_dmg(self.ack_dict.get('2000D'))
+        self.__loop2100d_nm1 = loop2100D.get_loop2100d_nm1(self.ack_dict.get('2000D'))
+        self.__loop2200d_trn = loop2200D.get_loop2200d_trn(self.ack_dict.get('2000D'))
+        self.__loop2200d_ref = loop2200D.get_loop2200d_ref(self.ack_dict.get('2000D'))
+        self.__loop2200d_amt = loop2200D.get_loop2200d_amt(self.ack_dict.get('2000D'))
         self.__loop2200d_dtp = loop2200D.get_loop2200d_dtp(self.ack_dict.get('2000D'))
 
     def get_loop2000a_hl01(self):
