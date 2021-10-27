@@ -7,7 +7,7 @@ MONGO_CLIENT = "mongodb://yousef:Ys2021xch@209.151.150.58:63327/?authSource=admi
                "=MongoDB%20Compass&ssl=false"
 
 
-class ConnectMongoDB:
+class ConnectMongoDBFinalReport:
     """
     connect to devDB and client database
     define the clients_collection,visits_collection,claims_collection as none

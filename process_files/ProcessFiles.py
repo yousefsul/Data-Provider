@@ -1,9 +1,9 @@
-from connectMongoDB import ConnectMongoDB
+from mongodb_connection.ConnectMongoDBFinalReport import ConnectMongoDBFinalReport
 
 
-class Process_999:
+class ProcessFiles:
     def __init__(self):
-        self.connection = ConnectMongoDB()
+        self.connection = ConnectMongoDBFinalReport()
         self.__db_name = self.connection.get_database_name()
         self.unproccessed_files = None
         self.unproccessed = None
@@ -18,7 +18,6 @@ class Process_999:
         self.unproccessed_files = self.connection.get_unproccessed_files()
         for self.unproccessed in self.unproccessed_files:
             self.__get_ack()
-            # self.__start_processing()
 
     def __get_ack(self):
         self.connection.connect_to_ack_collection()

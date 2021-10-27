@@ -31,11 +31,12 @@ class Consumer:
         self.__ack_file = ack_file
         if self.__credential:
             self.__data_provider_edi_file = DataProvider837(self.__edi_file)
+            self.__edi_file.pop('_id')
             self.__data_provider_ack_file = DataProvider999(self.__ack_file)
             self.__create_the_file()
             self.__data_provider_edi_file.get_count_body_segments()
-            self.__write_header_section()
             self.__loop_count = self.__data_provider_edi_file.get_count_body_segments()
+            self.__write_header_section()
             # if self.__data_provider_ack_file.ta1_data_provider.get_ta104() == 'R':
             #     self.__write_to_final_report_ta1_error()
             #     return
@@ -48,22 +49,31 @@ class Consumer:
                         self.__data_provider_edi_file.bulid_body_data_provider(self.__edi_file.get(self.__ack_segment))
                         self.__data_provider_ack_file.bulid_body_data_provider(
                             self.__data_provider_edi_file.st_data_provider.get_st02())
-                        self.__write_to_final_report(self.__data_provider_edi_file.st_data_provider.get_st02(),
-                                                     self.__data_provider_ack_file.ak2_data_provider.get_ik501())
+                        self.__write_to_final_report(
+                            self.__data_provider_edi_file.st_data_provider.get_loop2010ba_nm103() + " " +
+                            self.__data_provider_edi_file.st_data_provider.get_loop2010ba_nm104(),
+                            self.__data_provider_edi_file.st_data_provider.get_st02(),
+                            self.__data_provider_ack_file.ak2_data_provider.get_ik501(),
+                            self.__data_provider_edi_file.st_data_provider.get_loop2300_clm01()
+                        )
                     self.__loop_count -= 1
             self.__write_trailer_section()
 
-    def __write_to_final_report(self, claim_num, response):
+    def __write_to_final_report(self, patient_name, claim_num, response, clm01):
         with open(f"final_reports/{self.__file_name}", 'a') as self.__final_report:
             if response == 'A':
                 self.__accepted += 1
+                self.__final_report.write(f"\n{patient_name}")
                 self.__final_report.write(f"\nClaim with number {claim_num} is Accepted\n\n")
+                self.__final_report.write(f"\nPayer name {self.__data_provider_edi_file.st_data_provider.get_loop2010ba_nm103()}")
                 self.__final_report.write('-' * 75)
             if response == 'R':
                 self.__rejected += 1
                 self.__claims_rejected.append(self.__data_provider_ack_file.ak2_data_provider.get_ak202())
+                self.__final_report.write(f"\n{patient_name}")
                 self.__final_report.write(f"\nClaim with number {claim_num} is Rejected\n")
-                self.__final_report.write("Rejected because of :\n")
+                self.__final_report.write(f"\nPayer name {self.__data_provider_edi_file.st_data_provider.get_loop2010ba_nm103()}\n")
+                self.__final_report.write(f"\nPayer name {self.__data_provider_edi_file.st_data_provider.get_loop2400_dtp03()}\n")
                 self.__final_report.write(
                     f"Segment Error {self.__data_provider_ack_file.ak2_data_provider.get_ik301()}\n"
                     f"Position in transaction set {self.__data_provider_ack_file.ak2_data_provider.get_ik302()}\n"
@@ -76,7 +86,6 @@ class Consumer:
                 self.__final_report.write(self.__data_provider_ack_file.ak2_data_provider.get_ik502_definition() + '\n')
                 self.__final_report.write(self.__data_provider_ack_file.ak2_data_provider.get_ik304_definition() + '\n')
                 self.__final_report.write('-' * 75)
-
 
     def __write_header_section(self):
         with open(f"final_reports/{self.__file_name}", 'a') as self.__final_report:
@@ -99,7 +108,7 @@ class Consumer:
     def __write_to_final_report_ta1_error(self):
         with open(f"final_reports/{self.__file_name}", 'a') as self.__final_report:
             self.__final_report.write(
-                f"FINAL REPORT\n\n".center(100))
+                f"CLAIMS REPORT\n\n".center(100))
             self.__final_report.write("\nFile have interchange level error \n"
                                       f"The Error is "
                                       f"{self.__data_provider_ack_file.ta1_data_provider.get_ta105_definition()}\n"
@@ -112,8 +121,3 @@ class Consumer:
                            datetime.datetime.now().time().strftime("%H%M%S") + '_' + \
                            self.__data_provider_ack_file.gs_data_provider.get_gs04() + '_' + \
                            self.__data_provider_ack_file.isa_data_provider.get_isa06().strip() + '.txt'
-
-
-
-
-
