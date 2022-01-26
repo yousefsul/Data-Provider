@@ -11,9 +11,9 @@ class DataProvider999(DataProvider):
         self.__ack_dict = ack_dict
         self.__count_body_segments = 0
         super().__init__(self.__ack_dict)
-        self.__bulid()
+        self.__build()
 
-    def __bulid(self):
+    def __build(self):
         for self.__ack_segment in self.__ack_dict:
             self.__segment = self.__ack_segment.split('-')[0]
             if self.__segment == 'AK1':

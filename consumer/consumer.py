@@ -16,6 +16,8 @@ class Consumer:
         self.__rejected = 0
         self.__accepted = 0
         self.__final_report = None
+        self.__data_provider_edi_file = None
+        self.__data_provider_ack_file = None
         Path("final_reports").mkdir(parents=True, exist_ok=True)
         self.__claims_rejected = []
 
@@ -64,25 +66,23 @@ class Consumer:
             if response == 'A':
                 self.__accepted += 1
                 self.__final_report.write(f"\n{patient_name}")
-                self.__final_report.write(f"\nClaim with number {claim_num} is Accepted\n\n")
+                self.__final_report.write(f"\nClaim number {claim_num} is Accepted\n")
+                self.__final_report.write(f"\nDate of service {self.__data_provider_edi_file.st_data_provider.get_loop2010ba_nm103()}")
                 self.__final_report.write(f"\nPayer name {self.__data_provider_edi_file.st_data_provider.get_loop2010ba_nm103()}")
                 self.__final_report.write('-' * 75)
             if response == 'R':
                 self.__rejected += 1
                 self.__claims_rejected.append(self.__data_provider_ack_file.ak2_data_provider.get_ak202())
                 self.__final_report.write(f"\n{patient_name}")
-                self.__final_report.write(f"\nClaim with number {claim_num} is Rejected\n")
+                self.__final_report.write(f"\nClaim number {claim_num} is Rejected\n")
                 self.__final_report.write(f"\nPayer name {self.__data_provider_edi_file.st_data_provider.get_loop2010ba_nm103()}\n")
-                self.__final_report.write(f"\nPayer name {self.__data_provider_edi_file.st_data_provider.get_loop2400_dtp03()}\n")
                 self.__final_report.write(
                     f"Segment Error {self.__data_provider_ack_file.ak2_data_provider.get_ik301()}\n"
                     f"Position in transaction set {self.__data_provider_ack_file.ak2_data_provider.get_ik302()}\n"
                     f"Loop Number {self.__data_provider_ack_file.ak2_data_provider.get_ik303()}\n"
-                    f"The Error is {self.__data_provider_ack_file.ak2_data_provider.get_ik304_definition()}\n"
-                    f"Business Unit Field Location {self.__data_provider_ack_file.ak2_data_provider.get_ik3_context_01()}\n"
+                    f"Error Note is {self.__data_provider_ack_file.ak2_data_provider.get_ik304_definition()}\n"
                     f"Data Element Position in Segment {self.__data_provider_ack_file.ak2_data_provider.get_ik401()}\n"
-                    f"Data Element Reference Number {self.__data_provider_ack_file.ak2_data_provider.get_ik402()}\n"
-                    f"The Syntax Error is {self.__data_provider_ack_file.ak2_data_provider.get_ik403_definition()}\n")
+                    )
                 self.__final_report.write(self.__data_provider_ack_file.ak2_data_provider.get_ik502_definition() + '\n')
                 self.__final_report.write(self.__data_provider_ack_file.ak2_data_provider.get_ik304_definition() + '\n')
                 self.__final_report.write('-' * 75)

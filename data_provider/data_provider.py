@@ -9,9 +9,9 @@ class DataProvider:
     def __init__(self, ack_dict):
         self.__ack_dict = ack_dict
         self.__ack_segment, self.__segment, self.__sub_segment = None, None, None
-        self.__bulid()
+        self.__build()
 
-    def __bulid(self):
+    def __build(self):
         for self.__ack_segment in self.__ack_dict:
             self.__segment = self.__ack_segment.split('-')[0]
             if self.__segment == 'ISA':
@@ -29,4 +29,5 @@ class DataProvider:
     def get_count_body_segments(self):
         print("Count of body segments is ")
 
-
+    def get_database_name(self):
+        return self.__ack_dict.get('database_name')
