@@ -22,7 +22,6 @@ if __name__ == '__main__':
     consumer = Consumer835("")
     consumer.check_credentials_code()
 
-
     for payment in master_payments:
         consumer.process_payment(payments, payment, connection.get_database_name())
         payments.rewind()
