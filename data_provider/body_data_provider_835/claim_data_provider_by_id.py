@@ -196,6 +196,8 @@ class ClaimDataProviderById:
     def write_to_final_report(self, request_loop, request_segment, request_data_element_id, is_by_code=False, code='',
                               is_sub=False, is_write_one_line=False, is_set_specific_data_element=False,
                               is_svc=False):
+        self.__data_element_value = None
+        self.__data_element_label = None
         self.__request_loop = request_loop
         self.__request_segment = request_segment
         self.__request_data_element_id = request_data_element_id
@@ -208,12 +210,12 @@ class ClaimDataProviderById:
 
         # should changed when we change to python 3.10
 
-        if self.__is_set_specific_data_element:
-            self.set_specific_data_element()
-            return
-
         if self.__is_set_specific_data_element and self.__is_svc:
             self.set_specific_data_element_svc()
+            return
+
+        if self.__is_set_specific_data_element:
+            self.set_specific_data_element()
             return
 
         if self.__is_svc:
@@ -348,6 +350,9 @@ class ClaimDataProviderById:
             pass
 
     def get_data_element_value(self):
+        if self.__data_element_value is None:
+            return '999'
+
         if ":" in self.__data_element_value:
             return self.__data_element_value.split(':', 1)[1].strip()
         else:
@@ -401,29 +406,56 @@ class ClaimDataProviderById:
                 self.__svc[str(self.__number_of_svc)][segment] = param[segment]
 
     def __calc_amounts_per_svc(self):
+        count = 1
+        svc = None
+        self.__pr_list = []
+        self.__co_list = []
+        self.__reason_codes = []
         try:
             for svc in self.__svc:
+                count = 1
                 self.__patient_responsibility_svc = self.__insurance_responsibility_svc = Decimal128(
                     "{:.2f}".format(float(0.00)))
                 for segment in self.__svc.get(svc):
                     if segment.split('-')[0] == 'CAS':
                         for data_element in self.__svc.get(svc).get(segment):
+
                             # should be converted to switch when we change to python3.10
                             if self.__svc.get(svc).get(segment).get(data_element) == 'PR':
                                 tmp_data_element = int(data_element) + 2
+                                code_data_element = int(data_element) + 1
+
                                 self.__patient_responsibility_svc = self.__patient_responsibility_svc.to_decimal() + \
                                                                     Decimal128(self.__svc.get(svc).get(segment).get(
                                                                         str(tmp_data_element))).to_decimal()
+                                self.__pr_list.append({
+                                    self.__svc.get(svc).get(segment).get(str(code_data_element)):
+                                        self.__svc.get(svc).get(segment).get(str(tmp_data_element))
+                                })
+                                self.__reason_codes.append(self.__svc.get(svc).get(segment).get(str(code_data_element)))
+                                self.__svc.get(svc)['pr'][count] = {
+                                    self.__svc.get(svc).get(segment).get(str(code_data_element)):
+                                        Decimal128(self.__svc.get(svc).get(segment).get(str(tmp_data_element)))
+                                }
+                                count += 1
 
                             elif self.__svc.get(svc).get(segment).get(data_element) == 'CO':
                                 tmp_data_element = int(data_element) + 2
+                                code_data_element = int(data_element) + 1
                                 self.__insurance_responsibility_svc = self.__insurance_responsibility_svc.to_decimal() + \
                                                                       Decimal128(self.__svc.get(svc).get(segment).get(
                                                                           str(tmp_data_element))).to_decimal()
-                self.__svc.get(svc)['patient_responsibility'] = self.__patient_responsibility_svc
-                self.__svc.get(svc)['insurance_responsibility'] = self.__insurance_responsibility_svc
+                                self.__co_list.append(
+                                    {
+                                        self.__svc.get(svc).get(segment).get(str(code_data_element)):
+                                            Decimal128(self.__svc.get(svc).get(segment).get(str(tmp_data_element)))
+                                    }
+                                )
+                                self.__reason_codes.append(self.__svc.get(svc).get(segment).get(str(code_data_element)))
+
         except Exception as E:
-            pass
+            self.__svc.get(svc)['patient_responsibility'] = '$' + str(self.__patient_responsibility_svc)
+            self.__svc.get(svc)['insurance_responsibility'] = '$' + str(self.__insurance_responsibility_svc)
 
     def get_patient_responsibility_svc(self):
         return self.__patient_responsibility_svc
@@ -439,3 +471,12 @@ class ClaimDataProviderById:
 
     def get_from_svc(self, svc, key):
         return self.__svc.get(svc).get(key)
+
+    def get_pr_list(self):
+        return self.__pr_list
+
+    def get_co_list(self):
+        return self.__co_list
+
+    def get_reason_codes(self):
+        return self.__reason_codes
