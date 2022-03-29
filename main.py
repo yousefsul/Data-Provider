@@ -16,11 +16,13 @@ if __name__ == '__main__':
                    "=true&w=majority"
     connection = ConnectMongoDB(database_name='client_2731928905_DB')
     connection.connect_to_collection('paymentsColl')
-    payments = connection.find_from_collection_by_key_all('header_section.current_status.status', 'new')
+    # payments = connection.find_from_collection_by_key('header_section.current_status.status', 'new')
+    payments = connection.find_from_collection()
     connection.connect_to_collection('835_dict_coll')
     master_payments = connection.find_from_collection()
     consumer = Consumer835("")
     consumer.check_credentials_code()
+    # consumer.process_payment(payments, payment, connection.get_database_name())
 
     for payment in master_payments:
         consumer.process_payment(payments, payment, connection.get_database_name())

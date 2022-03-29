@@ -1,0 +1,60 @@
+                                           FINAL REPORT
+
+                                           
+835 File Name: 928425265_ERA_835_5010_20220304.835
+This file has 1 payment(s)
+----------------------------------------------------------------------------------------------------
+
+
+Payer Type: Insurance
+Payer Name: GREATWESTHEALTHCARE-CIGNA
+Payment Method: ACH-Automated Clearing House
+Credit or Debit Flag Code: C-Credit
+Originating Company: 1591031071
+Check Number: 600200350540
+Check Date: 03/04/2022
+Check Amount: $191.91
+
+Claim# 1:
+	Header Number: 1
+	Visit ID: 360078513
+	Claim Payment Status: 1-Processed as Primary.
+	Claim Total Charge: $570.00
+	Claim Paid Amount: $191.91
+	Patient Responsibility Amount: $15.00
+	Claim Filing Code (Plan Type): 13-Point of Service (POS)
+	Payer Claim Control Number: 220545867200
+	POS: 02
+	Frequency Type Code: 1
+	Entity Identifier Code: QC-Patient
+	Entity Type Qualifier: 1-Person
+	Patient Last Name: ADEIGBOLA
+	Patient First Name: KWAKU
+	Patient Middle Name or Initial: 999-Not provided for this claim
+	Patient Name Previx: 999-Not provided for this claim
+	Patient Name Suffix: 999-Not provided for this claim
+	Identification Code Qualifier: MI-Member Identification Number
+	Patient Identifier: 10483607200
+	
+	Service line# 1:
+	Product or Service ID Qualifier: HC-Health Care Financing Administration Common. Procedural Coding System (HCPCS) Codes.
+	Procedure Code: 99214
+	Procedure Modifier: 95
+	Line Charge: $270.00
+	Allowed Amount: $97.91
+	CO-Contractual Obligations. 45-Charge exceeds fee schedule/maximum allowable or contracted/legislated fee arrangement.  $172.09 
+	PR-Patient Responsibility 3-Co-payment Amount $15.00 
+	Reference Identification Qualifier: 6R-Provider Control Number
+	Line Item Control Number: 832988277L953143361
+	Allowed Amount: $97.91
+	Service line# 2:
+	Product or Service ID Qualifier: HC-Health Care Financing Administration Common. Procedural Coding System (HCPCS) Codes.
+	Procedure Code: 90838
+	Procedure Modifier: 95
+	Line Charge: $300.00
+	Allowed Amount: $109.00
+	CO-Contractual Obligations. 45-Charge exceeds fee schedule/maximum allowable or contracted/legislated fee arrangement.  $191.00 
+	Reference Identification Qualifier: 6R-Provider Control Number
+	Line Item Control Number: 832988277L953143362
+	Allowed Amount: $109.00
+	----------------------------------------------------------------------------------------------------

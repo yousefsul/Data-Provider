@@ -1,5 +1,7 @@
+from application.CommnMethodUsed import CommonMethodUsed
 from application.ConnectMongoDB import ConnectMongoDB
 from bson import Decimal128
+
 
 DEFAULT_CODE = "999-"
 
@@ -29,6 +31,8 @@ class ClaimDataProviderById:
         self.__data_element_id_list = None
         self.__is_set_specific_data_element = self.__is_svc = False
         self.__data_element_to_exclude = []
+        # self.__total_patient_responsibility, self.__total_insurance_responsibility = float
+        
         self.__total_patient_responsibility = self.__total_insurance_responsibility = Decimal128(
             "{:.2f}".format(float(0.00)))
         self.__patient_responsibility_svc = self.__insurance_responsibility_svc = Decimal128(
@@ -37,11 +41,15 @@ class ClaimDataProviderById:
         self.__extract_2000_loop()
         self.__extract_2100_loop()
         self.__calc_amounts_per_svc()
+
+        self.__calc_amounts_per_svc_tmp()
+
         self.__connection = ConnectMongoDB('devDB')
         self.__connection.connect_to_collection('Specification835')
         self.__specifications = self.__connection.find_from_collection_by_key("header_section.835_id", 5642377247)
         self.__connection.connect_to_collection('referenceTables')
         self.__reference_tables = self.__connection.find_from_collection()
+        self.__common_method = CommonMethodUsed()
 
     def __extract_2000_loop(self):
         self.__parsed_claim["2000"] = {}
@@ -419,7 +427,6 @@ class ClaimDataProviderById:
                 for segment in self.__svc.get(svc):
                     if segment.split('-')[0] == 'CAS':
                         for data_element in self.__svc.get(svc).get(segment):
-
                             # should be converted to switch when we change to python3.10
                             if self.__svc.get(svc).get(segment).get(data_element) == 'PR':
                                 tmp_data_element = int(data_element) + 2
@@ -480,3 +487,64 @@ class ClaimDataProviderById:
 
     def get_reason_codes(self):
         return self.__reason_codes
+
+    def get_pr_list_tmp(self):
+        return self.__pr_list_tmp
+
+    def get_co_list_tmp(self):
+        return self.__co_list_tmp
+
+    def get_reason_codes_tmp(self):
+        return self.__reason_codes_tmp
+
+    def __calc_amounts_per_svc_tmp(self):
+        count = 1
+        svc = None
+        self.__pr_list_tmp = []
+        self.__co_list_tmp = []
+        self.__reason_codes_tmp = []
+        try:
+            for svc in self.__svc:
+                if svc == "2":
+                    count = 1
+                    self.__patient_responsibility_svc = self.__insurance_responsibility_svc = Decimal128(
+                        "{:.2f}".format(float(0.00)))
+                    for segment in self.__svc.get(svc):
+                        if segment.split('-')[0] == 'CAS':
+                            for data_element in self.__svc.get(svc).get(segment):
+                                # should be converted to switch when we change to python3.10
+                                if self.__svc.get(svc).get(segment).get(data_element) == 'PR':
+                                    tmp_data_element = int(data_element) + 2
+                                    code_data_element = int(data_element) + 1
+
+                                    self.__patient_responsibility_svc = self.__patient_responsibility_svc.to_decimal() + \
+                                                                        Decimal128(self.__svc.get(svc).get(segment).get(
+                                                                            str(tmp_data_element))).to_decimal()
+                                    self.__pr_list_tmp.append({
+                                        self.__svc.get(svc).get(segment).get(str(code_data_element)):
+                                            self.__svc.get(svc).get(segment).get(str(tmp_data_element))
+                                    })
+                                    self.__reason_codes_tmp.append(self.__svc.get(svc).get(segment).get(str(code_data_element)))
+                                    self.__svc.get(svc)['pr'][count] = {
+                                        self.__svc.get(svc).get(segment).get(str(code_data_element)):
+                                            Decimal128(self.__svc.get(svc).get(segment).get(str(tmp_data_element)))
+                                    }
+                                    count += 1
+
+                                elif self.__svc.get(svc).get(segment).get(data_element) == 'CO':
+                                    tmp_data_element = int(data_element) + 2
+                                    code_data_element = int(data_element) + 1
+                                    self.__insurance_responsibility_svc = self.__insurance_responsibility_svc.to_decimal() + \
+                                                                          Decimal128(self.__svc.get(svc).get(segment).get(
+                                                                              str(tmp_data_element))).to_decimal()
+                                    self.__co_list_tmp.append(
+                                        {
+                                            self.__svc.get(svc).get(segment).get(str(code_data_element)):
+                                                Decimal128(self.__svc.get(svc).get(segment).get(str(tmp_data_element)))
+                                        }
+                                    )
+                                    self.__reason_codes_tmp.append(self.__svc.get(svc).get(segment).get(str(code_data_element)))
+            self.__svc.get(svc)['patient_responsibility'] = '$' + str(self.__patient_responsibility_svc)
+            self.__svc.get(svc)['insurance_responsibility'] = '$' + str(self.__insurance_responsibility_svc)
+        except Exception as E:
+            pass
