@@ -17,7 +17,7 @@ Check Amount: $191.91
 
 Claim# 1:
 	Header Number: 1
-	Visit ID: 360078513
+	Visit ID: 342668527
 	Claim Payment Status: 1-Processed as Primary.
 	Claim Total Charge: $570.00
 	Claim Paid Amount: $191.91
@@ -47,7 +47,9 @@ Claim# 1:
 	Reference Identification Qualifier: 6R-Provider Control Number
 	Line Item Control Number: 832988277L953143361
 	Allowed Amount: $97.91
-	Service line# 2:
+	Line Paid Amount: $82.91
+	----------------------------------------------------------------------------------------------------
+Service line# 2:
 	Product or Service ID Qualifier: HC-Health Care Financing Administration Common. Procedural Coding System (HCPCS) Codes.
 	Procedure Code: 90838
 	Procedure Modifier: 95
@@ -57,4 +59,5 @@ Claim# 1:
 	Reference Identification Qualifier: 6R-Provider Control Number
 	Line Item Control Number: 832988277L953143362
 	Allowed Amount: $109.00
+	Line Paid Amount: $109.00
 	----------------------------------------------------------------------------------------------------
