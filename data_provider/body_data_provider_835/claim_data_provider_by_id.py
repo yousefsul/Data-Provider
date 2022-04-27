@@ -1,3 +1,5 @@
+import json
+
 from application.CommnMethodUsed import CommonMethodUsed
 from application.ConnectMongoDB import ConnectMongoDB
 from bson import Decimal128
@@ -6,18 +8,20 @@ DEFAULT_CODE = "999-"
 
 
 class ClaimDataProviderById:
-    def __init__(self, claim, file):
+    def __init__(self, claim, file, payment):
+        self.__sub_segment = None
         self.__claim = claim
         self.__file = file
+        self.__payment = payment
         self.__final_report = file
         self.__parsed_claim = {}
-        self.__number_of_svc = 0
+        self.__number_of_svc = self.__clp_count = 0
         self.__svc = {}
         self.__id = None
         self.__is_code_description = self.__is_sub = self.__is_write_to_one_line = False
         self.__data_element_value = None
         self.__data_element = None
-        self.__data_element_id = None
+        self.__data_element_id = self.__request_other_data_element_id_in_segment = None
         self.__segment, self.__case_segment = None, 'CAS'
         self.__loop = None
         self.__request_code = None
@@ -30,13 +34,13 @@ class ClaimDataProviderById:
         self.__data_element_id_list = None
         self.__is_set_specific_data_element = self.__is_svc = False
         self.__data_element_to_exclude = []
-        # self.__total_patient_responsibility, self.__total_insurance_responsibility = float
-
-        self.__total_patient_responsibility = self.__total_insurance_responsibility = Decimal128(
+        self.__total_patient_responsibility = self.__total_deductible = self.__total_coins = self.__total_copay = self.__total_other = self.__total_insurance_responsibility = Decimal128(
             "{:.2f}".format(float(0.00)))
         self.__patient_responsibility_svc = self.__insurance_responsibility_svc = Decimal128(
             "{:.2f}".format(float(0.00)))
         self.__request_loop, self.__request_segment, self.__request_data_element_id = None, None, None
+        self.__extract_1000a_loop()
+        self.__extract_1000b_loop()
         self.__extract_2000_loop()
         self.__extract_2100_loop()
         self.__common_method = CommonMethodUsed()
@@ -46,6 +50,26 @@ class ClaimDataProviderById:
         self.__specifications = self.__connection.find_from_collection_by_key("header_section.835_id", 5642377247)
         self.__connection.connect_to_collection('referenceTables')
         self.__reference_tables = self.__connection.find_from_collection()
+
+    def __extract_1000a_loop(self):
+        self.__parsed_claim["1000A"] = {}
+        for self.__segment in self.__payment:
+            if self.__segment == '1000A':
+                for self.__sub_segment in self.__payment.get(self.__segment):
+                    self.__parsed_claim["1000A"][self.__sub_segment] = {}
+                    for self.__data_element in self.__payment.get(self.__segment).get(self.__sub_segment):
+                        self.__parsed_claim["1000A"][self.__sub_segment][self.__get_new_key()] = \
+                            self.__payment.get(self.__segment).get(self.__sub_segment).get(self.__data_element)
+
+    def __extract_1000b_loop(self):
+        self.__parsed_claim["1000B"] = {}
+        for self.__segment in self.__payment:
+            if self.__segment == '1000B':
+                for self.__sub_segment in self.__payment.get(self.__segment):
+                    self.__parsed_claim["1000B"][self.__sub_segment] = {}
+                    for self.__data_element in self.__payment.get(self.__segment).get(self.__sub_segment):
+                        self.__parsed_claim["1000B"][self.__sub_segment][self.__get_new_key()] = \
+                            self.__payment.get(self.__segment).get(self.__sub_segment).get(self.__data_element)
 
     def __extract_2000_loop(self):
         self.__parsed_claim["2000"] = {}
@@ -64,6 +88,8 @@ class ClaimDataProviderById:
                     if self.__segment == "2110":
                         self.__extract_2110_loop(self.__claim.get(self.__loop).get(self.__segment))
                     self.__parsed_claim[self.__loop][self.__segment] = {}
+                    if self.__segment.split('-')[0] == 'CLP':
+                        self.__clp_count += 1
                     for self.__data_element in self.__claim.get(self.__loop).get(self.__segment):
                         self.__parsed_claim[self.__loop][self.__segment][self.__get_new_key()] = \
                             self.__claim.get(self.__loop).get(self.__segment).get(self.__data_element)
@@ -76,8 +102,6 @@ class ClaimDataProviderById:
                 cas_segment = True
             self.__parsed_claim[self.__segment][segment] = {}
             for self.__data_element in param[segment]:
-                if cas_segment:
-                    self.__calc_amounts(param[segment], param[segment][self.__data_element])
                 self.__parsed_claim[self.__segment][segment][self.__get_new_key()] = param[segment][self.__data_element]
         self.__build_svc_dict(self.__parsed_claim[self.__segment])
 
@@ -90,6 +114,9 @@ class ClaimDataProviderById:
                             if self.__data_element_id == self.__request_data_element_id:
                                 self.__data_element_value = self.__parsed_claim.get(self.__loop).get(
                                     self.__segment).get(self.__data_element_id)
+                                if self.__data_element_value is not None and self.__request_other_data_element_id_in_segment:
+                                    self.__data_element_value = self.__parsed_claim.get(self.__loop).get(
+                                        self.__segment).get(self.__request_other_data_element_id_in_segment)
                                 self.__check_data_element_value()
                                 self.__master_write_to_final_report()
                                 return
@@ -148,7 +175,7 @@ class ClaimDataProviderById:
                                         for data_element in self.__data_element_id_list:
                                             self.__request_data_element_id_sub = self.__request_data_element_id + '-' + \
                                                                                  str(request_data_element_id_sub_count)
-                                            self.__svc[self.__loop]['Procedure Code'] = self.__data_element_id_list[1]
+                                            self.__set_svc_sub_data_element()
                                             self.__data_element_value = data_element
                                             self.__check_data_element_value()
                                             self.__master_write_to_final_report()
@@ -199,7 +226,7 @@ class ClaimDataProviderById:
 
     def write_to_final_report(self, request_loop, request_segment, request_data_element_id, is_by_code=False, code='',
                               is_sub=False, is_write_one_line=False, is_set_specific_data_element=False,
-                              is_svc=False):
+                              is_svc=False, request_other_data_element_id_in_segment=''):
         self.__data_element_value = None
         self.__data_element_label = None
         self.__request_loop = request_loop
@@ -211,7 +238,7 @@ class ClaimDataProviderById:
         self.__is_sub = is_sub
         self.__is_write_to_one_line = is_write_one_line
         self.__is_set_specific_data_element = is_set_specific_data_element
-
+        self.__request_other_data_element_id_in_segment = request_other_data_element_id_in_segment
         # should be changed when we change to python 3.10
 
         if self.__is_set_specific_data_element and self.__is_svc:
@@ -265,13 +292,13 @@ class ClaimDataProviderById:
                 self.__data_element_value = '$' + str(Decimal128("{:.2f}".format(float(self.__data_element_value))))
 
         self.__data_element_label = self.__specifications.get(self.__request_data_element_id).get("medvertex_label")
-        self.__data_element_id_description = self.__get_code_description()
+        # self.__data_element_id_description = self.__get_code_description()
         if not self.__is_write_to_one_line:
             self.__data_element_value = self.__data_element_label + ': ' + self.__data_element_value
         else:
             self.__data_element_value = self.__data_element_value
-        if self.__data_element_id_description:
-            self.__data_element_value += self.__data_element_id_description
+        # if self.__data_element_id_description:
+        #     self.__data_element_value += self.__data_element_id_description
 
     def __check_data_element_sub_value(self):
         if self.__data_element_value is None or self.__data_element_value == "":
@@ -296,10 +323,10 @@ class ClaimDataProviderById:
 
         self.__data_element_label = self.__specifications.get(self.__request_data_element_id).get(
             self.__request_data_element_id_sub).get("medvertex_label")
-        self.__data_element_id_description = self.__get_code_description_sub()
+        # self.__data_element_id_description = self.__get_code_description_sub()
         self.__data_element_value = self.__data_element_label + ': ' + self.__data_element_value
-        if self.__data_element_id_description:
-            self.__data_element_value += self.__data_element_id_description
+        # if self.__data_element_id_description:
+        #     self.__data_element_value += self.__data_element_id_description
 
     def __master_write_to_final_report(self):
         self.__final_report.write(self.__data_element_value)
@@ -311,14 +338,14 @@ class ClaimDataProviderById:
     def __write_new_line_and_tap(self):
         self.__final_report.write('\n\t')
 
-    def __get_code_description(self):
+    def get_code_description(self):
         if self.__specifications.get(self.__request_data_element_id).get('need_description') == 'Y':
             implementation_name = self.__specifications.get(self.__request_data_element_id).get('data_element_name')
             self.__reference_tables.rewind()
             for ref in self.__reference_tables:
                 ref.pop('_id')
                 if implementation_name in ref.keys():
-                    return '-' + ref.get(implementation_name).get(self.__data_element_value)
+                    return ref.get(implementation_name).get(self.__data_element_value.split(':')[1].strip())
 
     def __get_code_description_sub(self):
         if self.__specifications.get(self.__request_data_element_id).get(
@@ -337,25 +364,9 @@ class ClaimDataProviderById:
     def insurance_responsibility(self):
         return self.__total_insurance_responsibility
 
-    def __calc_amounts(self, param, code):
-        try:
-            split_data_element = self.__data_element.split('_')
-            tmp_id = int(split_data_element[0]) + 2
-            tmp_data_element = int(split_data_element[1]) + 2
-            tmp_data_element = format(tmp_data_element, '02d')
-            final_result_data_element = str(tmp_id) + '_' + str(tmp_data_element)
-            if code == 'PR':
-                self.__total_patient_responsibility = self.__total_patient_responsibility.to_decimal() + \
-                                                      Decimal128(param[final_result_data_element]).to_decimal()
-            else:
-                self.__total_insurance_responsibility = self.__total_insurance_responsibility.to_decimal() + \
-                                                        Decimal128(param[final_result_data_element]).to_decimal()
-        except Exception as E:
-            pass
-
     def get_data_element_value(self):
         if self.__data_element_value is None:
-            return '999'
+            return 'NP'
 
         if ":" in self.__data_element_value:
             return self.__data_element_value.split(':', 1)[1].strip()
@@ -410,15 +421,23 @@ class ClaimDataProviderById:
                 self.__svc[str(self.__number_of_svc)][segment] = param[segment]
 
     def __calc_amounts_per_svc(self):
-        self.__pr_dict = {}
+        self.__pr_deductible_dict = {}
+        self.__pr_coins_dict = {}
+        self.__pr_copay_dict = {}
+        self.__pr_other_dict = {}
         self.__co_dict = {}
+        self.__co_oa_pi = {}
         self.__reason_codes = {}
-        self.__patient_responsibility_total = self.__insurance_responsibility_total = \
-            self.__common_method.convert_string_float_num('0')
+        self.__patient_responsibility_total = self.__insurance_responsibility_total = self.__total_deductible = self.__total_coins = self.__total_copay = self.__total_other = self.__common_method.convert_string_float_num(
+            '0')
         for svc in self.__svc:
             count = 1
-            self.__pr_dict[str(svc)] = []
+            self.__pr_deductible_dict[str(svc)] = []
+            self.__pr_coins_dict[str(svc)] = []
+            self.__pr_copay_dict[str(svc)] = []
+            self.__pr_other_dict[str(svc)] = []
             self.__co_dict[str(svc)] = []
+            self.__co_oa_pi[str(svc)] = []
             self.__patient_responsibility_svc = self.__insurance_responsibility_svc = \
                 self.__common_method.convert_string_float_num('0')
             for segment in self.__svc.get(svc):
@@ -428,16 +447,61 @@ class ClaimDataProviderById:
                             case 'PR':
                                 tmp_data_element = int(data_element) + 2
                                 code_data_element = int(data_element) + 1
-                                self.__patient_responsibility_svc = self.__svc.get(svc).get(segment).get(
-                                    str(tmp_data_element))
-                                self.__patient_responsibility_total += self.__common_method.convert_string_float_num(
-                                    self.__patient_responsibility_svc)
-                                self.__pr_dict[svc].append({self.__svc.get(svc).get(segment).get(
-                                    str(code_data_element)): self.__svc.get(svc).get(segment).get(
-                                    str(tmp_data_element))})
-                                self.__reason_codes.update(
-                                    {self.__svc.get(svc).get(segment).get(str(code_data_element)): tmp_data_element})
-                                count += 1
+                                match self.__svc.get(svc).get(segment).get(str(code_data_element)):
+                                    case '1':
+                                        self.__patient_responsibility_svc = self.__svc.get(svc).get(segment).get(
+                                            str(tmp_data_element))
+                                        self.__patient_responsibility_total += self.__common_method.convert_string_float_num(
+                                            self.__patient_responsibility_svc)
+                                        self.__total_deductible += self.__common_method.convert_string_float_num(
+                                            self.__patient_responsibility_svc)
+                                        self.__pr_deductible_dict[svc].append({self.__svc.get(svc).get(segment).get(
+                                            str(code_data_element)): self.__svc.get(svc).get(segment).get(
+                                            str(tmp_data_element))})
+                                        self.__reason_codes.update({self.__svc.get(svc).get(segment).get(
+                                            str(code_data_element)): tmp_data_element})
+                                        count += 1
+
+                                    case '2':
+                                        self.__patient_responsibility_svc = self.__svc.get(svc).get(segment).get(
+                                            str(tmp_data_element))
+                                        self.__patient_responsibility_total += self.__common_method.convert_string_float_num(
+                                            self.__patient_responsibility_svc)
+                                        self.__total_coins += self.__common_method.convert_string_float_num(
+                                            self.__patient_responsibility_svc)
+                                        self.__pr_coins_dict[svc].append({self.__svc.get(svc).get(segment).get(
+                                            str(code_data_element)): self.__svc.get(svc).get(segment).get(
+                                            str(tmp_data_element))})
+                                        self.__reason_codes.update({self.__svc.get(svc).get(segment).get(
+                                            str(code_data_element)): tmp_data_element})
+                                        count += 1
+
+                                    case '3':
+                                        self.__patient_responsibility_svc = self.__common_method.convert_string_float_num(
+                                            self.__svc.get(svc).get(segment).get(str(tmp_data_element)))
+                                        self.__patient_responsibility_total += self.__common_method.convert_string_float_num(
+                                            self.__patient_responsibility_svc)
+                                        self.__total_copay += self.__common_method.convert_string_float_num(
+                                            self.__patient_responsibility_svc)
+                                        self.__pr_copay_dict[svc].append({self.__svc.get(svc).get(segment).get(
+                                            str(code_data_element)): self.__svc.get(svc).get(segment).get(
+                                            str(tmp_data_element))})
+                                        self.__reason_codes.update({self.__svc.get(svc).get(segment).get(
+                                            str(code_data_element)): tmp_data_element})
+                                        count += 1
+                                    case _:
+                                        self.__patient_responsibility_svc = self.__svc.get(svc).get(segment).get(
+                                            str(tmp_data_element))
+                                        self.__patient_responsibility_total += self.__common_method.convert_string_float_num(
+                                            self.__patient_responsibility_svc)
+                                        self.__total_other += self.__common_method.convert_string_float_num(
+                                            self.__patient_responsibility_svc)
+                                        self.__pr_other_dict[svc].append({self.__svc.get(svc).get(segment).get(
+                                            str(code_data_element)): self.__svc.get(svc).get(segment).get(
+                                            str(tmp_data_element))})
+                                        self.__reason_codes.update({self.__svc.get(svc).get(segment).get(
+                                            str(code_data_element)): tmp_data_element})
+                                        count += 1
 
                             case 'CO':
                                 tmp_data_element = int(data_element) + 2
@@ -449,6 +513,40 @@ class ClaimDataProviderById:
                                 self.__co_dict[svc].append({self.__svc.get(svc).get(segment).get(
                                     str(code_data_element)): self.__svc.get(svc).get(segment).get(
                                     str(tmp_data_element))})
+                                self.__co_oa_pi[svc].append({self.__svc.get(svc).get(segment).get(
+                                    data_element): self.__svc.get(svc).get(segment).get(str(code_data_element))})
+                                self.__reason_codes.update(
+                                    {self.__svc.get(svc).get(segment).get(str(code_data_element)): tmp_data_element})
+                                count += 1
+
+                            case 'OA':
+                                tmp_data_element = int(data_element) + 2
+                                code_data_element = int(data_element) + 1
+                                self.__insurance_responsibility_svc = self.__svc.get(svc).get(segment).get(
+                                    str(tmp_data_element))
+                                self.__insurance_responsibility_total += self.__common_method.convert_string_float_num(
+                                    self.__insurance_responsibility_svc)
+                                self.__co_dict[svc].append({self.__svc.get(svc).get(segment).get(
+                                    str(code_data_element)): self.__svc.get(svc).get(segment).get(
+                                    str(tmp_data_element))})
+                                self.__co_oa_pi[svc].append({self.__svc.get(svc).get(segment).get(
+                                    data_element): self.__svc.get(svc).get(segment).get(str(code_data_element))})
+                                self.__reason_codes.update(
+                                    {self.__svc.get(svc).get(segment).get(str(code_data_element)): tmp_data_element})
+                                count += 1
+
+                            case 'PI':
+                                tmp_data_element = int(data_element) + 2
+                                code_data_element = int(data_element) + 1
+                                self.__insurance_responsibility_svc = self.__svc.get(svc).get(segment).get(
+                                    str(tmp_data_element))
+                                self.__insurance_responsibility_total += self.__common_method.convert_string_float_num(
+                                    self.__insurance_responsibility_svc)
+                                self.__co_dict[svc].append({self.__svc.get(svc).get(segment).get(
+                                    str(code_data_element)): self.__svc.get(svc).get(segment).get(
+                                    str(tmp_data_element))})
+                                self.__co_oa_pi[svc].append({self.__svc.get(svc).get(segment).get(
+                                    data_element): self.__svc.get(svc).get(segment).get(str(code_data_element))})
                                 self.__reason_codes.update(
                                     {self.__svc.get(svc).get(segment).get(str(code_data_element)): tmp_data_element})
                                 count += 1
@@ -468,11 +566,23 @@ class ClaimDataProviderById:
     def get_from_svc(self, svc, key):
         return self.__svc.get(svc).get(key)
 
-    def get_pr_list(self, svc):
-        return self.__pr_dict.get(svc)
+    def get_pr_deductible_list(self, svc):
+        return self.__pr_deductible_dict.get(svc)
+
+    def get_pr_coins_list(self, svc):
+        return self.__pr_coins_dict.get(svc)
+
+    def get_pr_copay_list(self, svc):
+        return self.__pr_copay_dict.get(svc)
+
+    def get_pr_other_list(self, svc):
+        return self.__pr_other_dict.get(svc)
 
     def get_co_list(self, svc):
         return self.__co_dict.get(svc)
+
+    def get_co_oa_pi_list(self, svc):
+        return self.__co_oa_pi.get(svc)
 
     def get_reason_codes(self):
         return self.__reason_codes
@@ -488,3 +598,25 @@ class ClaimDataProviderById:
 
     def get_insurance_responsibility_total(self):
         return round(self.__insurance_responsibility_total, 2)
+
+    def get_count_clp(self):
+        return self.__clp_count
+
+    def __set_svc_sub_data_element(self):
+        self.__svc[self.__loop]['Procedure Code'] = self.__data_element_id_list[1]
+        tmp_modifiers = ""
+        counter = 2
+        while counter < len(self.__data_element_id_list):
+            tmp_modifiers = (self.__data_element_id_list[counter]) + " "
+            counter += 1
+            if counter == 5:
+                break
+        self.__svc[self.__loop]['MOD'] = tmp_modifiers
+
+    def get_patient_totals(self):
+        self.__patient_totals = []
+        self.__patient_totals.append(self.__total_deductible)
+        self.__patient_totals.append(self.__total_coins)
+        self.__patient_totals.append(self.__total_copay)
+        self.__patient_totals.append(self.__total_other)
+        return self.__patient_totals

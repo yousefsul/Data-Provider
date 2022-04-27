@@ -15,49 +15,52 @@ Check Number: 600200350540
 Check Date: 03/04/2022
 Check Amount: $191.91
 
-Claim# 1:
+Claim# 1:Entity Identifier Code: BARBARA FONTANE
+	Payee Identification Code: 1205801511
+	Entity Identifier Code: GREATWESTHEALTHCARE-CIGNA
+	Payer Address Line: 8505 E. ORCHARD RD
+	Payer City Name: GREENWOOD VILLAGE
+	Payer State Code: CO
+	Payer Postal Zone or ZIP Code: 80111
+	Claim Date: 02/24/2022
+	Facility Type Value: 02
+	Claim Payment Status: 1
+	Header Number: 1
+	
 	Header Number: 1
 	Visit ID: 342668527
-	Claim Payment Status: 1-Processed as Primary.
+	Claim Payment Status: 1
 	Claim Total Charge: $570.00
 	Claim Paid Amount: $191.91
 	Patient Responsibility Amount: $15.00
-	Claim Filing Code (Plan Type): 13-Point of Service (POS)
+	Claim Filing Code (Plan Type): 13
 	Payer Claim Control Number: 220545867200
 	POS: 02
 	Frequency Type Code: 1
-	Entity Identifier Code: QC-Patient
-	Entity Type Qualifier: 1-Person
+	Entity Identifier Code: QC
+	Entity Type Qualifier: 1
 	Patient Last Name: ADEIGBOLA
 	Patient First Name: KWAKU
 	Patient Middle Name or Initial: 999-Not provided for this claim
 	Patient Name Previx: 999-Not provided for this claim
 	Patient Name Suffix: 999-Not provided for this claim
-	Identification Code Qualifier: MI-Member Identification Number
+	Identification Code Qualifier: MI
 	Patient Identifier: 10483607200
 	
 	Service line# 1:
-	Product or Service ID Qualifier: HC-Health Care Financing Administration Common. Procedural Coding System (HCPCS) Codes.
+	Product or Service ID Qualifier: HC
 	Procedure Code: 99214
 	Procedure Modifier: 95
 	Line Charge: $270.00
 	Allowed Amount: $97.91
-	CO-Contractual Obligations. 45-Charge exceeds fee schedule/maximum allowable or contracted/legislated fee arrangement.  $172.09 
-	PR-Patient Responsibility 3-Co-payment Amount $15.00 
-	Reference Identification Qualifier: 6R-Provider Control Number
-	Line Item Control Number: 832988277L953143361
-	Allowed Amount: $97.91
 	Line Paid Amount: $82.91
-	----------------------------------------------------------------------------------------------------
-Service line# 2:
-	Product or Service ID Qualifier: HC-Health Care Financing Administration Common. Procedural Coding System (HCPCS) Codes.
+	Line Item Control Number: 832988277L953143361
+	Service line# 2:
+	Product or Service ID Qualifier: HC
 	Procedure Code: 90838
 	Procedure Modifier: 95
 	Line Charge: $300.00
 	Allowed Amount: $109.00
-	CO-Contractual Obligations. 45-Charge exceeds fee schedule/maximum allowable or contracted/legislated fee arrangement.  $191.00 
-	Reference Identification Qualifier: 6R-Provider Control Number
-	Line Item Control Number: 832988277L953143362
-	Allowed Amount: $109.00
 	Line Paid Amount: $109.00
+	Line Item Control Number: 832988277L953143362
 	----------------------------------------------------------------------------------------------------
