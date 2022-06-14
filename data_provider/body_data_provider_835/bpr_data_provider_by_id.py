@@ -25,6 +25,11 @@ class BprDataProviderById:
         self.__trn = {}
         self.__build_trn_dashed()
         self.__build_trn()
+        self.__plb_tmp = {}
+        self.__plb = {}
+        self.__build_plb_dashed()
+        self.__build_plb()
+
 
     def __build_bpr_dashed(self):
         for segment in self.__payment:
@@ -57,3 +62,12 @@ class BprDataProviderById:
     def __build_trn(self):
         for data_element in self.__trn_tmp:
             self.__trn.update({data_element.split('_')[0]: self.__trn_tmp.get(data_element)})
+
+    def __build_plb(self):
+        for data_element in self.__plb_tmp:
+            self.__plb.update({data_element.split('_')[0]: self.__plb_tmp.get(data_element)})
+
+    def __build_plb_dashed(self):
+        for segment in self.__payment:
+            if segment == 'PLB':
+                self.__plb_tmp = self.__payment.get(segment)

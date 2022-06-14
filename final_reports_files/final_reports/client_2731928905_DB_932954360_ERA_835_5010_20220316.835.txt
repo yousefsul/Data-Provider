@@ -1,0 +1,22 @@
+: AFROZA AHMED MD
+	: 1104284595
+	: BLUE CROSS AND BLUE SHIELD OF ARIZONA, INC.
+	: P.O. BOX 13466
+	: PHOENIX
+	: AZ
+	: 850023466
+	: CX
+	: 999-Not provided for this claim
+	: 6028644320
+	: TE
+	: 8002322345
+	: 4320
+	: 1
+	Service Qualifier: HC
+	CPT: 90837
+	Modifier A: 95
+	Charge Amount: $185.00
+	Allowable Amount: $116.77
+	Paid Amount: $0.00
+	Service Line Control Number: 834513026L957133922
+	

@@ -10,17 +10,19 @@ from application.ConnectMongoDB import ConnectMongoDB
 
 class DataProvider835ById(DataProvider):
     def __init__(self, edi_dict):
-        self.__count_clp_segments = None
         self.__payment = None
         self.__edi_dict = edi_dict
+        self.__st = {}
         self.__count_body_segments = self.__clp_count = 0
+        # self.__check_clp_segment()
         super().__init__(edi_dict)
 
     def build_body_data_provider(self, param):
         self.st_data_provider = StDataProviderById(param)
 
-    def build_claim_data_provider(self, param, final_report, param_full_st):
-        self.claim_data_provider = ClaimDataProviderById(param, final_report, param_full_st)
+    def build_claim_data_provider(self, param, final_report, param_full_st, loop_2000):
+        self.__st = param
+        self.claim_data_provider = ClaimDataProviderById(param, final_report, param_full_st, loop_2000)
 
     def get_count_body_segments(self):
         self.__count_body_segments = 0
@@ -38,34 +40,27 @@ class DataProvider835ById(DataProvider):
         self.bpr_data_provider = BprDataProviderById(self.__payment)
 
     def get_count_clp_segments(self):
-        self.__clp_count = 0
-        self.__check_clp_segment()
         return self.__clp_count
 
-    def __check_clp_segment(self):
-        for self.__ack_segment in self.__edi_dict:
-            self.__segment = self.__ack_segment.split('-')[0]
-            if self.__segment == 'ST':
-                for segment in self.__edi_dict.get(self.__ack_segment):
-                    check_segment = segment.split('-')[0]
-                    if check_segment == 'CLP':
-                        self.__count_clp_segments += 1
-                    if check_segment == '1000A':
-                        self.__check_1000a_loop(self.__edi_dict.get(self.__ack_segment).get(segment))
-                    if check_segment == '1000B':
-                        self.__check_1000b_loop(self.__edi_dict.get(self.__ack_segment).get(segment))
-                    if check_segment == '2000':
-                        self.__check_2000_loop(self.__edi_dict.get(self.__ack_segment).get(segment))
+    def check_clp_segment(self):
+        self.__clp_count = 0
+        for self.__ack_segment in self.__st:
+            check_segment = self.__ack_segment.split('-')[0]
+            if check_segment == 'CLP':
+                self.__clp_count += 1
+            if check_segment == '2100':
+                self.__clp_count += 1
+                # self.__check_2100_loop(self.__st.get(self.__ack_segment).get(segment))
 
     def __check_1000a_loop(self, param):
         for segment in param:
             if segment.split('-')[0] == 'CLP':
-                self.__count_clp_segments += 1
+                self.__clp_count += 1
 
     def __check_1000b_loop(self, param):
         for segment in param:
             if segment.split('-')[0] == 'CLP':
-                self.__count_clp_segments += 1
+                self.__clp_count += 1
 
     def __check_2000_loop(self, param):
         for segment in param:
